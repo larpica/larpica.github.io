@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#171717">
+<title>iOS 6 Calculator</title>
+<style>
+:root{color-scheme:dark;--gap:clamp(4px,1vw,10px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;min-height:100%;background:#171717;color:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;touch-action:manipulation}
+body{min-height:100vh;min-height:100dvh;display:flex;justify-content:center;align-items:stretch;overflow:auto}
+.app{width:100%;min-height:100vh;min-height:100dvh;padding:env(safe-area-inset-top,0) max(8px,env(safe-area-inset-right,0)) env(safe-area-inset-bottom,0) max(8px,env(safe-area-inset-left,0));display:flex;flex-direction:column;background:repeating-linear-gradient(115deg,rgba(255,255,255,.018) 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 0,#343434 0,#191919 56%,#090909 100%)}
+.display{flex:0 0 clamp(58px,10.5vh,88px);height:clamp(58px,10.5vh,88px);min-height:58px;width:100%;margin:4px 0 8px;padding:5px 10px;display:flex;flex-direction:column;justify-content:center;align-items:stretch;border:2px solid #5a594b;border-radius:5px;background:linear-gradient(180deg,#efeedb,#d6d5b7 60%,#b7b69a);box-shadow:inset 0 2px 8px #888,0 2px 3px #000;color:#24432d;text-shadow:0 1px #f5f5df;overflow:hidden}
+.display-top{display:flex;align-items:center;gap:8px;min-height:14px}.mode{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:clamp(11px,1.5vw,16px);font-weight:700;letter-spacing:.04em}.history{flex:1;text-align:right;font-size:clamp(12px,2vw,18px);opacity:.72;white-space:nowrap;overflow:hidden}.readout{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:clamp(24px,8vw,68px);font-weight:400;text-align:right;white-space:nowrap;line-height:1;overflow:hidden;letter-spacing:-.025em;font-variant-numeric:lining-nums tabular-nums;min-width:0;width:100%;flex:1;display:flex;align-items:center;justify-content:flex-end;}
+.key-area{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:var(--gap);padding-bottom:max(5px,env(safe-area-inset-bottom,0))}
+.key{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;position:relative;min-width:0;min-height:0;border:1px solid #050505;border-radius:clamp(10px,2.8vw,18px);font-size:clamp(18px,4.8vw,31px);color:#fff;text-shadow:0 -1px 1px #000;background:linear-gradient(180deg,#484848 0%,#292929 48%,#0b0b0b 100%);box-shadow:inset 0 1px 0 #858585,inset 0 -2px 1px #000,0 2px 2px #000;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.key:before{content:"";position:absolute;left:4%;top:3%;width:92%;height:43%;border-radius:6px 6px 45% 45%;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.07) 65%,transparent);pointer-events:none}.key span{position:relative;z-index:1}.key:active{filter:brightness(1.25);transform:translateY(1px)}
+.num{background:linear-gradient(180deg,#393939 0%,#171717 48%,#050505 100%)}.mem{background:linear-gradient(180deg,#858585 0%,#666 48%,#414141 100%);font-size:clamp(13px,3.5vw,22px);font-weight:700}.op,.warm{background:linear-gradient(180deg,#a18b72 0%,#806b54 48%,#5d4a38 100%)}.science{background:linear-gradient(180deg,#858585 0%,#666 48%,#414141 100%)}.eq{background:linear-gradient(180deg,#ffb044 0%,#ff8b00 48%,#d96800 100%);border-color:#9c4d00}.eq:before{background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.06) 65%,transparent)}.zero{grid-column:span 2}
+.scientific{display:none}
+/* Portrait: original-style 4-column keypad; every key occupies its own cell. */
+@media (orientation:landscape) and (min-width:560px){
+ body{overflow:auto}.app{min-height:100dvh;max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:clamp(55px,14vh,95px) minmax(230px,1fr);gap:8px;padding:env(safe-area-inset-top,0) max(8px,env(safe-area-inset-right,0)) env(safe-area-inset-bottom,0) max(8px,env(safe-area-inset-left,0))}
+ .display{grid-column:1 / -1;grid-row:1;margin:0;min-height:0;height:auto;padding:4px 12px;flex-direction:row;align-items:center;justify-content:space-between}.display-top{min-width:70px}.history{display:none}.readout{flex:1;min-width:0;font-size:clamp(24px,5vw,52px)}
+ .key-area{grid-column:2;grid-row:2;min-height:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(6,minmax(32px,1fr));gap:5px;padding:0}.scientific{display:grid;grid-column:1;grid-row:2;min-height:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(6,minmax(32px,1fr));gap:5px}.key{font-size:clamp(14px,2.5vw,25px);border-radius:clamp(9px,1.3vw,14px)}.mem{font-size:clamp(11px,1.7vw,16px)}.scientific .key{font-size:clamp(11px,1.8vw,18px)}.key-area .zero{grid-column:span 1}
+}
+/* Tablet portrait: keep comfortable large keys and use more available space without stretching labels. */
+@media (min-width:700px) and (orientation:portrait){.app{max-width:700px;margin:0 auto;padding-left:clamp(18px,5vw,42px);padding-right:clamp(18px,5vw,42px)}.display{flex-basis:clamp(110px,17vh,170px);height:clamp(110px,17vh,170px)}.key-area{gap:clamp(8px,1.4vw,13px);grid-template-rows:repeat(6,minmax(0,1fr))}.key{font-size:clamp(25px,4vw,38px);border-radius:16px}}
+</style>
+</head>
+<body>
+<main class="app" aria-label="iOS 6 style calculator">
+<section class="display" aria-live="polite"><div class="display-top"><div class="mode" id="mode"></div><div class="history" id="history"></div></div><div class="readout" id="readout">0</div></section>
+<section class="scientific" id="scientific" aria-label="Scientific keys">
+<button class="key science" type="button" aria-label="("><span>(</span></button>
+<button class="key science" type="button" aria-label=")"><span>)</span></button>
+<button class="key science" type="button" aria-label="2nd"><span>2nd</span></button>
+<button class="key science" type="button" aria-label="x²"><span>x²</span></button>
+<button class="key science" type="button" aria-label="x³"><span>x³</span></button>
+<button class="key science" type="button" aria-label="xʸ"><span>xʸ</span></button>
+<button class="key science" type="button" aria-label="eˣ"><span>eˣ</span></button>
+<button class="key science" type="button" aria-label="10ˣ"><span>10ˣ</span></button>
+<button class="key science" type="button" aria-label="1/x"><span>1/x</span></button>
+<button class="key science" type="button" aria-label="√x"><span>√x</span></button>
+<button class="key science" type="button" aria-label="∛x"><span>∛x</span></button>
+<button class="key science" type="button" aria-label="ʸ√x"><span>ʸ√x</span></button>
+<button class="key science" type="button" aria-label="ln"><span>ln</span></button>
+<button class="key science" type="button" aria-label="log₁₀"><span>log₁₀</span></button>
+<button class="key science" type="button" aria-label="x!"><span>x!</span></button>
+<button class="key science" type="button" aria-label="sin"><span>sin</span></button>
+<button class="key science" type="button" aria-label="cos"><span>cos</span></button>
+<button class="key science" type="button" aria-label="tan"><span>tan</span></button>
+<button class="key science" type="button" aria-label="e"><span>e</span></button>
+<button class="key science" type="button" aria-label="EE"><span>EE</span></button>
+<button class="key science" type="button" aria-label="Rad/Deg"><span>Rad/Deg</span></button>
+<button class="key science" type="button" aria-label="sinh"><span>sinh</span></button>
+<button class="key science" type="button" aria-label="cosh"><span>cosh</span></button>
+<button class="key science" type="button" aria-label="π"><span>π</span></button>
+</section>
+<section class="key-area" id="standard" aria-label="Calculator keys">
+<button class="key mem" type="button" aria-label="mc"><span>mc</span></button>
+<button class="key mem" type="button" aria-label="m+"><span>m+</span></button>
+<button class="key mem" type="button" aria-label="m−"><span>m−</span></button>
+<button class="key mem" type="button" aria-label="mr"><span>mr</span></button>
+<button class="key warm" type="button" aria-label="C"><span>C</span></button>
+<button class="key op" type="button" aria-label="±"><span>±</span></button>
+<button class="key op" type="button" aria-label="%"><span>%</span></button>
+<button class="key op" type="button" aria-label="÷"><span>÷</span></button>
+<button class="key num" type="button" aria-label="7"><span>7</span></button>
+<button class="key num" type="button" aria-label="8"><span>8</span></button>
+<button class="key num" type="button" aria-label="9"><span>9</span></button>
+<button class="key op" type="button" aria-label="×"><span>×</span></button>
+<button class="key num" type="button" aria-label="4"><span>4</span></button>
+<button class="key num" type="button" aria-label="5"><span>5</span></button>
+<button class="key num" type="button" aria-label="6"><span>6</span></button>
+<button class="key op" type="button" aria-label="−"><span>−</span></button>
+<button class="key num" type="button" aria-label="1"><span>1</span></button>
+<button class="key num" type="button" aria-label="2"><span>2</span></button>
+<button class="key num" type="button" aria-label="3"><span>3</span></button>
+<button class="key op" type="button" aria-label="+"><span>+</span></button>
+<button class="key num zero" type="button" aria-label="0"><span>0</span></button>
+<button class="key num" type="button" aria-label="."><span>.</span></button>
+<button class="key eq" type="button" aria-label="="><span>=</span></button>
+</section>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),readout=$('readout'),history=$('history'),mode=$('mode');
+let current='0',stored=null,operator=null,waiting=false,memory=0,lastOperand=null,lastOperator=null,degrees=true,justEvaluated=false,second=false;
+const standard=[['mc','mem'],['m+','mem'],['m−','mem'],['mr','mem'],['C','mem'],['±','op'],['%','op'],['÷','op'],['7','num'],['8','num'],['9','num'],['×','op'],['4','num'],['5','num'],['6','num'],['−','op'],['1','num'],['2','num'],['3','num'],['+','op'],['0','num zero'],['.','num'],['=','eq']];
+const scientific=[['(', 'science'],[')', 'science'],['2nd','science'],['x²','science'],['x³','science'],['xʸ','science'],['eˣ','science'],['10ˣ','science'],['1/x','science'],['√x','science'],['∛x','science'],['ʸ√x','science'],['ln','science'],['log₁₀','science'],['x!','science'],['sin','science'],['cos','science'],['tan','science'],['e','science'],['EE','science'],['Rad/Deg','science'],['sinh','science'],['cosh','science'],['π','science']];
+function build(el){el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>press(b.textContent.trim())))}build($('standard'));build($('scientific'));
+function fmt(n){if(!Number.isFinite(n))return 'Error';let s=String(Number(n.toPrecision(10)));return s.length>13?Number(n.toPrecision(7)).toExponential():s}
+function fitReadout(){readout.style.fontSize='';const max=readout.clientWidth;let size=Math.min(68,Math.max(18,readout.clientHeight*0.88));readout.style.fontSize=size+'px';while(readout.scrollWidth>max && size>12){size-=1;readout.style.fontSize=size+'px'}}
+function show(){readout.textContent=current;mode.textContent=window.matchMedia('(orientation: landscape) and (min-width: 560px)').matches?(degrees?'Deg':'Rad'):'';requestAnimationFrame(fitReadout)}
+function number(n){if(current==='Error')current='0';if(waiting||justEvaluated){current=n==='.'?'0.':n;waiting=false;justEvaluated=false}else if(n==='.') {if(!current.includes('.'))current+='.'}else current=current==='0'?n:current+n;show()}
+function calc(a,b,op){switch(op){case '+':return a+b;case '−':return a-b;case '×':return a*b;case '÷':return b===0?NaN:a/b;case 'xʸ':return Math.pow(a,b);case 'EE':return a*Math.pow(10,b);default:return b}}
+function choose(op){const v=Number(current);if(operator&&!waiting){const r=calc(stored,v,operator);current=fmt(r);stored=r;history.textContent=''}else stored=v;operator=op;waiting=true;justEvaluated=false;show()}
+function equal(){if(operator){const rhs=waiting?stored:Number(current),lhs=stored,result=calc(lhs,rhs,operator);history.textContent=fmt(lhs)+' '+operator+' '+fmt(rhs)+' =';current=fmt(result);lastOperand=rhs;lastOperator=operator;operator=null;stored=null;waiting=true;justEvaluated=true;show()}else if(lastOperator){current=fmt(calc(Number(current),lastOperand,lastOperator));show()}}
+function unary(label){const x=Number(current);let r=x;const angle=degrees?Math.PI/180:1;switch(label){case '±':r=-x;break;case '%':r=x/100;break;case '√x':r=Math.sqrt(x);break;case '∛x':r=Math.cbrt(x);break;case '1/x':r=1/x;break;case 'x²':r=x*x;break;case 'x³':r=x*x*x;break;case 'xʸ':choose('xʸ');return;case 'eˣ':r=Math.exp(x);break;case '10ˣ':r=Math.pow(10,x);break;case 'ln':r=Math.log(x);break;case 'log₁₀':r=Math.log10(x);break;case 'sin':r=second?Math.asin(x)/angle:Math.sin(x*angle);break;case 'cos':r=second?Math.acos(x)/angle:Math.cos(x*angle);break;case 'tan':r=second?Math.atan(x)/angle:Math.tan(x*angle);break;case 'sinh':r=Math.sinh(x);break;case 'cosh':r=Math.cosh(x);break;case 'tanh':r=Math.tanh(x);break;case 'x!':r=x<0||x>170||!Number.isInteger(x)?NaN:Array.from({length:x},(_,i)=>i+1).reduce((a,b)=>a*b,1);break;case 'π':r=Math.PI;break;case 'e':r=Math.E;break;case 'Rand':r=Math.random();break;case 'ʸ√x':r=Math.pow(x,1/2);break;case '2nd':second=!second;document.querySelectorAll('.scientific .key').forEach(b=>b.style.filter=second?'brightness(1.2)':'');return;case 'Rad/Deg':degrees=!degrees;show();return;case '(':case ')':case 'EE':return;default:return}current=fmt(r);waiting=true;justEvaluated=true;show()}
+function press(k){if(/^\d$/.test(k)){number(k);return}if(k==='.') {number('.');return}if(['+','−','×','÷','xʸ','EE'].includes(k)){choose(k);return}if(k==='='){equal();return}if(k==='C'){current='0';stored=null;operator=null;waiting=false;history.textContent='';justEvaluated=false;show();return}if(k==='mc'){memory=0;return}if(k==='m+'){memory+=Number(current);return}if(k==='m−'){memory-=Number(current);return}if(k==='mr'){current=fmt(memory);waiting=true;show();return}unary(k)}
+window.addEventListener('keydown',e=>{if(/^\d$/.test(e.key)||e.key==='.')press(e.key);else if(e.key==='+')press('+');else if(e.key==='-')press('−');else if(e.key==='*')press('×');else if(e.key==='/')press('÷');else if(e.key==='Enter'||e.key==='=')press('=');else if(e.key==='Escape'||e.key==='Backspace')press('C')});window.addEventListener('orientationchange',show);window.addEventListener('resize',show);show();
+})();
+</script>
+</body>
+</html>
