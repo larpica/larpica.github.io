@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Helvetica Neue Profile Builder</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:light dark}body{max-width:760px;margin:0 auto;padding:24px;line-height:1.5}h1{font-size:1.7rem}button{font:inherit;font-weight:650;padding:13px 17px;border:0;border-radius:12px;background:#087cff;color:white;width:100%;margin:12px 0}button:disabled{opacity:.55}progress{width:100%;height:16px}#status{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border:1px solid #8887;border-radius:10px;min-height:48px}.note{padding:12px;border-radius:10px;background:#8882}li{margin:.3em 0}
+</style>
+</head>
+<body>
+<h1>Helvetica Neue Profile Builder</h1>
+<p>This page fetches the seven Helvetica Neue OTF files from your GitHub repository and packages them into an Apple font configuration profile.</p>
+<div class="note"><strong>Important:</strong> Apple's font profile installs fonts for compatible apps. It does <strong>not</strong> replace the iOS system font in Settings, the Home Screen, or other system interfaces.</div>
+<button id="build">Fetch fonts and build .mobileconfig</button>
+<progress id="progress" max="7" value="0" hidden></progress>
+<p id="status" role="status" aria-live="polite">Ready. Tap the button to begin.</p>
+<p>If the download fails, check your connection and try again. This page does not upload anything.</p>
+<script>
+const fonts = [
+  ["HelveticaNeue-Bold.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-Bold.otf"],
+  ["HelveticaNeue-Light.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-Light.otf"],
+  ["HelveticaNeue-Medium.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-Medium.otf"],
+  ["HelveticaNeue-Regular.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-Regular.otf"],
+  ["HelveticaNeue-RegularItalic.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-RegularItalic.otf"],
+  ["HelveticaNeue-Thin.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-Thin.otf"],
+  ["HelveticaNeue-Ultralight.otf", "https://raw.githubusercontent.com/larpica/larpica.github.io/main/HelveticaNeue-Ultralight.otf"]
+];
+const $ = id => document.getElementById(id);
+function uuid(){return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&3|8)).toString(16)}).toUpperCase()}
+function xmlEscape(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&apos;")}
+function base64(bytes){let out="",step=0x8000;for(let i=0;i<bytes.length;i+=step){out+=String.fromCharCode(...bytes.subarray(i,Math.min(i+step,bytes.length)))}return btoa(out)}
+function payload(file,data){return `<dict>\n<key>Font</key><data>${data}</data>\n<key>Name</key><string>${xmlEscape(file)}</string>\n<key>PayloadDescription</key><string>Helvetica Neue font file</string>\n<key>PayloadDisplayName</key><string>${xmlEscape(file)}</string>\n<key>PayloadIdentifier</key><string>com.larpica.helveticaneue.${file.toLowerCase().replace(/[^a-z0-9]+/g,"-")}</string>\n<key>PayloadType</key><string>com.apple.font</string>\n<key>PayloadUUID</key><string>${uuid()}</string>\n<key>PayloadVersion</key><integer>1</integer>\n</dict>`}
+$('build').addEventListener('click', async()=>{
+ const button=$('build'),progress=$('progress'),status=$('status');button.disabled=true;progress.hidden=false;progress.value=0;status.textContent="Starting downloads…";
+ try{
+  const content=[];
+  for(let i=0;i<fonts.length;i++){
+   const [name,url]=fonts[i];status.textContent=`Downloading ${i+1} of ${fonts.length}: ${name}`;
+   const response=await fetch(url,{cache:"no-store"});
+   if(!response.ok) throw new Error(`${name}: HTTP ${response.status}.`);
+   const bytes=new Uint8Array(await response.arrayBuffer());
+   if(bytes.length<100 || !(bytes[0]===0x4F&&bytes[1]===0x54&&bytes[2]===0x54&&bytes[3]===0x4F) && !(bytes[0]===0x00&&bytes[1]===0x01&&bytes[2]===0x00&&bytes[3]===0x00)) throw new Error(`${name} did not look like a valid OTF/TrueType font. Check that the GitHub file exists.`);
+   content.push(payload(name,base64(bytes)));progress.value=i+1;
+  }
+  const profileUUID=uuid();
+  const plist=`<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict>\n<key>PayloadContent</key><array>${content.join("\n")}</array>\n<key>PayloadDescription</key><string>Installs seven Helvetica Neue font variants for compatible apps.</string>\n<key>PayloadDisplayName</key><string>iOS 6 Helvetica Neue Fonts</string>\n<key>PayloadIdentifier</key><string>com.larpica.ios6.helveticaneue</string>\n<key>PayloadOrganization</key><string>Larpica</string>\n<key>PayloadRemovalDisallowed</key><false/>\n<key>PayloadType</key><string>Configuration</string>\n<key>PayloadUUID</key><string>${profileUUID}</string>\n<key>PayloadVersion</key><integer>1</integer>\n</dict></plist>`;
+  const blob=new Blob([plist],{type:"application/x-apple-aspen-config;charset=utf-8"});const a=document.createElement("a");const objectURL=URL.createObjectURL(blob);a.href=objectURL;a.download="iOS6_HelveticaNeue.mobileconfig";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectURL),30000);status.textContent="Done! Your iOS6_HelveticaNeue.mobileconfig download has been prepared. Open the downloaded profile on your iPhone to review and install it.";
+ }catch(error){status.textContent="Could not build the profile.\n"+error.message+"\n\nIf this mentions a network/CORS error, try opening this HTML in Safari after saving it to Files, or retry later. No profile was created."}
+ finally{button.disabled=false}
+});
+</script>
+</body>
+</html>
